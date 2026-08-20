@@ -64,6 +64,53 @@ This codebase provides three main components: expert similarity calibration, vLL
 
 First, compute expert similarity matrices for your MoE model using a calibration dataset.
 
+You can create a paper-style text calibration set from WikiText or C4 and run calibration in one command:
+
+```bash
+# WikiText example
+python scripts/run_calibration_sere.py \
+    --model_type qwen3_moe \
+    --model_path Qwen/Qwen3-30B-A3B-Instruct-2507 \
+    --output_path ./calibration/output/qwen3_sere_wikitext \
+    --dataset wikitext \
+    --config wikitext-103-raw-v1 \
+    --split train \
+    --num_calibration_samples 2048 \
+    --max_calibration_bytes 95000000 \
+    --similarity_method frobenius \
+    --batch_size 32 \
+    --max_len 512
+
+# C4 example
+python scripts/run_calibration_sere.py \
+    --model_type qwen3_moe \
+    --model_path Qwen/Qwen3-30B-A3B-Instruct-2507 \
+    --output_path ./calibration/output/qwen3_sere_c4 \
+    --dataset allenai/c4 \
+    --config en \
+    --split train \
+    --streaming \
+    --num_calibration_samples 2048 \
+    --max_calibration_bytes 95000000 \
+    --similarity_method frobenius \
+    --batch_size 32 \
+    --max_len 512
+```
+
+If you only need to materialize the parquet used by the original calibration script:
+
+```bash
+python scripts/prepare_calibration_data.py \
+    --dataset wikitext \
+    --config wikitext-103-raw-v1 \
+    --split train \
+    --model_path Qwen/Qwen3-30B-A3B-Instruct-2507 \
+    --min_tokens 513 \
+    --max_samples 2048 \
+    --max_text_bytes 95000000 \
+    --output_path ./calibration/data/wikitext_calibration.parquet
+```
+
 ```bash
 cd calibration
 
@@ -180,6 +227,29 @@ vllm serve \
     --gpu-memory-utilization 0.95 \
     --hf-overrides '{"architectures": ["Qwen2MoeForCausalLMSERE"], "select_top_k": 2, "threshold": 0.0}'
 ```
+
+**Offline MMLU Evaluation**
+
+After installing the SERE vLLM plugin, evaluate a calibrated model with offline vLLM inference:
+
+```bash
+VLLM_USE_V1=0 python scripts/run_mmlu_offline_sere.py \
+    --model ./calibration/output/qwen3_sere_c4 \
+    --model_type qwen3_moe \
+    --config all \
+    --eval_split test \
+    --num_fewshot 5 \
+    --scoring_mode choice \
+    --tensor_parallel_size 1 \
+    --batch_size 64 \
+    --select_top_k 2 \
+    --threshold 0.1
+```
+
+The default `--scoring_mode choice` performs one constrained A/B/C/D generation per
+question. Use `--scoring_mode exact` only when you need exact continuation
+log-likelihood scoring; it sends four requests per question. The script writes
+`results.json` and per-sample predictions under `outputs/mmlu_sere/`.
 
 ### Step 4: Evaluation with OpenCompass
 

@@ -20,7 +20,7 @@
 # limitations under the License.
 
 from functools import partial
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, TypedDict, Union
 
 import torch
 import torch.nn.functional as F
@@ -43,7 +43,12 @@ from transformers.modeling_outputs import (
 from transformers.modeling_rope_utils import ROPE_INIT_FUNCTIONS, dynamic_rope_update
 from transformers.modeling_utils import ALL_ATTENTION_FUNCTIONS, PreTrainedModel
 from transformers.processing_utils import Unpack
-from transformers.utils import LossKwargs, auto_docstring, can_return_tuple, is_torch_flex_attn_available, logging
+from transformers.utils import auto_docstring, can_return_tuple, is_torch_flex_attn_available, logging
+try:
+    from transformers.utils import LossKwargs
+except ImportError:
+    class LossKwargs(TypedDict, total=False):
+        num_items_in_batch: int
 from transformers.models.qwen3_moe.configuration_qwen3_moe import Qwen3MoeConfig
 
 # Import similarity computation functions

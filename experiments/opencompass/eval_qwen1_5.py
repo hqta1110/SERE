@@ -60,10 +60,10 @@ model_kwargs = dict(
     gpu_memory_utilization=0.9,        # slightly lower headroom
     trust_remote_code=True,
 )
-model_path = 'path/to/your/model'
+model_path = '/home/PC/SERE/calibration/output/qwen2_moe_similarity'
 model_kwargs["hf_overrides"] = {
     "architectures": ["Qwen2MoeForCausalLMSERE"], 
-    "select_top_k": 2, 
+    "select_top_k": 4, 
     "threshold": 0.1,
 }
 

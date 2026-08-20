@@ -85,6 +85,10 @@ def main():
         trust_remote_code=True
     )
     model.eval()
+    # Prefill-only calibration -> no KV cache needed. Disabling it avoids the
+    # stale Cache API in the adapted DeepSeek modeling (get_usable_length etc.,
+    # written for an older transformers).
+    model.config.use_cache = False
 
     # Enable similarity computation for all MoE layers
     print("Configuring similarity computation...")

@@ -2,7 +2,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+/calibration/data
+/calibration/output
+/experiments
+/outputs
 # C extensions
 *.so
 

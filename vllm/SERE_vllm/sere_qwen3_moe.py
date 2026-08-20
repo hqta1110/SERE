@@ -159,20 +159,14 @@ class Qwen3MoeSparseMoeBlock(nn.Module):
 
     def _create_optimized_routing_function(self):
         """Create routing function with cached tensor access."""
-        def rerouting_function(hidden_states: torch.Tensor, gating_output: torch.Tensor, 
-                              topk: int, renormalize: bool) -> Tuple[torch.Tensor, torch.Tensor]:
-            
-            # Get standard top-k selection first
+        def rerouting_function(hidden_states: torch.Tensor, gating_output: torch.Tensor,
+                               topk: int, renormalize: bool) -> Tuple[torch.Tensor, torch.Tensor]:
             topk_weights, topk_ids = fused_topk(hidden_states, gating_output, topk, renormalize)
-            
-            if self.similarity_matrix is None:
-                return topk_weights, topk_ids
-            return rerouting_ops_cuda(topk_weights, topk_ids, self.similarity_matrix, self.select_top_k,
-                                      self._high_mask_cache, self._expert_mapping_cache, self.threshold)
-            
-            # Default: no rerouting
-            return topk_weights, topk_ids
-        
+            return rerouting_ops_cuda(
+                topk_weights, topk_ids, self.similarity_matrix, self.select_top_k,
+                self._high_mask_cache, self._expert_mapping_cache, self.threshold,
+            )
+
         return rerouting_function
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
