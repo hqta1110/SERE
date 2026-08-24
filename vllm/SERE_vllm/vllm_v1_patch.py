@@ -429,7 +429,12 @@ def _patch_block_init(block_cls: type[nn.Module]) -> None:
             config = args[0]
         elif "config" in kwargs:
             config = kwargs["config"]
-        if config is not None:
+        # Portable path: when SERE_SIMILARITY_PT is set, inject the matrix from the
+        # .pt (base model + matrices only — no baked/overlay checkpoint needed) for
+        # EVERY family. Otherwise fall back to loading it from the checkpoint.
+        if _sim_injection_enabled():
+            _enable_sere_via_injection(self, _extract_prefix(args, kwargs), config)
+        elif config is not None:
             _enable_sere_on_block(self, config)
 
     block_cls.__init__ = patched_init
@@ -442,55 +447,85 @@ import re as _re
 _Q35_SIM_CACHE: dict = {}
 
 
-def _load_qwen3_5_similarity(layer_idx: int) -> "torch.Tensor | None":
-    """Load the per-layer similarity matrix for Qwen3.5-MoE from the .pt named by
-    $SERE_SIMILARITY_PT (disk-clean: we serve the base checkpoint and inject the
-    calibrated matrices here instead of baking a 64GB copy)."""
+def _sim_injection_enabled() -> bool:
+    return bool(_os.environ.get("SERE_SIMILARITY_PT"))
+
+
+def _load_injected_similarity(layer_idx: int) -> "torch.Tensor | None":
+    """Per-layer similarity matrix from the .pt named by $SERE_SIMILARITY_PT.
+
+    Portable path (used for EVERY model family when the env var is set): serve the
+    base checkpoint and inject the calibrated matrices here, instead of shipping a
+    baked/overlay checkpoint. The .pt is a dict {layer_idx: [E,E] tensor}; keys may
+    be int or str, so try both."""
     path = _os.environ.get("SERE_SIMILARITY_PT")
     if not path:
         return None
     if not _Q35_SIM_CACHE:
         _Q35_SIM_CACHE.update(torch.load(path, map_location="cpu"))
-    return _Q35_SIM_CACHE.get(layer_idx)
+    if layer_idx in _Q35_SIM_CACHE:
+        return _Q35_SIM_CACHE[layer_idx]
+    return _Q35_SIM_CACHE.get(str(layer_idx))
 
 
-def _enable_sere_on_qwen3_5_block(module: nn.Module, prefix: str) -> None:
-    """Qwen3.5-MoE (Qwen3NextSparseMoeBlock) SERE enable: like _enable_sere_on_block
-    but the similarity matrix is loaded from the calibration .pt by layer index
-    (parsed from the module prefix, e.g. model.language_model.layers.7.mlp), and
-    select_top_k/threshold come from env (SERE_SELECT_TOP_K / SERE_THRESHOLD)."""
+def _extract_prefix(args: tuple, kwargs: dict) -> str:
+    """Find the module prefix (…layers.N.mlp) among a block __init__'s args/kwargs.
+    vLLM passes it as prefix= for qwen2/qwen3/qwen3_next and positionally for some
+    blocks; scan both for the first string containing 'layers.'."""
+    p = kwargs.get("prefix")
+    if isinstance(p, str) and "layers." in p:
+        return p
+    for a in args:
+        if isinstance(a, str) and "layers." in a:
+            return a
+    return p if isinstance(p, str) else ""
+
+
+def _enable_sere_via_injection(module: nn.Module, prefix: str, config: Any = None) -> None:
+    """SERE enable that INJECTS the similarity matrix from the calibration .pt by
+    layer index (parsed from the module prefix), instead of loading it from the
+    checkpoint. Uniform across families (qwen2_moe / qwen3_moe / deepseek_v2 /
+    qwen3_next). select_top_k / threshold come from env; scoring params from config
+    when available (falls back to softmax / no-bias / scale 1.0)."""
     if not hasattr(module, "experts"):
         return
     m = _re.search(r"layers\.(\d+)\.", prefix or "")
     if m is None:
+        logger.warning("SERE inject: could not parse layer index from prefix %r", prefix)
         return
     layer_idx = int(m.group(1))
-    sim = _load_qwen3_5_similarity(layer_idx)
+    sim = _load_injected_similarity(layer_idx)
     if sim is None:
-        logger.warning("SERE qwen3_5: no similarity for layer %s (SERE_SIMILARITY_PT set?)", layer_idx)
+        # Dense (non-MoE) layers legitimately have no matrix; stay silent for those.
         return
     num_experts = sim.shape[0]
     module.select_top_k = int(_os.environ.get("SERE_SELECT_TOP_K", "2"))
     module.threshold = float(_os.environ.get("SERE_THRESHOLD", "0.0"))
-    # Register as NON-PERSISTENT BUFFERS (not Parameters): we inject the calibrated
-    # value here rather than loading from the checkpoint, and vLLM's weight-loader
-    # completeness check flags uninitialized Parameters but ignores buffers. Place
-    # them on the block's own device so the rerouting op's indexing doesn't hit a
-    # CPU/GPU device mismatch.
+    # NON-PERSISTENT BUFFERS (not Parameters): injected here, not loaded from the
+    # checkpoint — vLLM's weight-loader completeness check flags uninitialized
+    # Parameters but ignores buffers. On the block's own device so the rerouting
+    # op's indexing doesn't hit a CPU/GPU mismatch.
     dev = next((p.device for p in module.parameters()), torch.device("cpu"))
-    module.register_buffer(
-        "similarity_matrix", sim.to(torch.float32).clone().to(dev), persistent=False,
-    )
+    module.register_buffer("similarity_matrix", sim.to(torch.float32).clone().to(dev), persistent=False)
     module.register_buffer("_high_mask_cache", torch.zeros(num_experts, dtype=torch.bool, device=dev), persistent=False)
     module.register_buffer("_expert_mapping_cache", torch.zeros(num_experts, dtype=torch.long, device=dev), persistent=False)
+
+    scoring_func = getattr(config, "scoring_func", "softmax") if config is not None else "softmax"
+    routed_scaling_factor = float(getattr(module, "routed_scaling_factor", 1.0))
+    gate = getattr(module, "gate", None)
+    e_score_correction_bias = getattr(gate, "e_score_correction_bias", None)
+    if isinstance(e_score_correction_bias, nn.Parameter):
+        e_score_correction_bias = e_score_correction_bias.data
+
     custom_routing_function = _make_sere_routing_function(
-        module, scoring_func="softmax", e_score_correction_bias=None,
-        routed_scaling_factor=1.0,
+        module, scoring_func=scoring_func,
+        e_score_correction_bias=e_score_correction_bias,
+        routed_scaling_factor=routed_scaling_factor,
     )
     _rebuild_router(module.experts, custom_routing_function)
     logger.info(
-        "Enabled SERE routing for Qwen3.5-MoE layer %s: select_top_k=%s threshold=%s",
-        layer_idx, module.select_top_k, module.threshold,
+        "Enabled SERE routing (injected) for %s layer %s: select_top_k=%s threshold=%s",
+        module.__class__.__name__, layer_idx, module.select_top_k, module.threshold,
     )
 
 
@@ -501,10 +536,7 @@ def _patch_qwen3_5_block_init(block_cls: type[nn.Module]) -> None:
 
     def patched_init(self: nn.Module, *args: Any, **kwargs: Any) -> None:
         original_init(self, *args, **kwargs)
-        prefix = kwargs.get("prefix")
-        if prefix is None and len(args) >= 2 and isinstance(args[1], str):
-            prefix = args[1]
-        _enable_sere_on_qwen3_5_block(self, prefix or "")
+        _enable_sere_via_injection(self, _extract_prefix(args, kwargs))
 
     block_cls.__init__ = patched_init
     block_cls._sere_v1_patched = True
@@ -520,10 +552,9 @@ def patch_vllm_v1_sere() -> None:
     _patch_block_init(qwen2_moe.Qwen2MoeSparseMoeBlock)
     _patch_block_init(qwen3_moe.Qwen3MoeSparseMoeBlock)
     _patch_block_init(deepseek_v2.DeepseekV2MoE)
-    # Qwen3.5-MoE uses qwen3_next's SparseMoeBlock; enable only when calibrated
-    # matrices are provided (SERE_SIMILARITY_PT), so non-SERE qwen3_next serves
-    # are unaffected.
-    if _os.environ.get("SERE_SIMILARITY_PT"):
+    # Qwen3.5-MoE uses qwen3_next's SparseMoeBlock and has no baked-checkpoint SERE
+    # class, so it is injection-only — enable only when matrices are provided.
+    if _sim_injection_enabled():
         try:
             from vllm.model_executor.models import qwen3_next
             _patch_qwen3_5_block_init(qwen3_next.Qwen3NextSparseMoeBlock)
