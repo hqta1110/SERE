@@ -436,6 +436,80 @@ def _patch_block_init(block_cls: type[nn.Module]) -> None:
     block_cls._sere_v1_patched = True
 
 
+import os as _os
+import re as _re
+
+_Q35_SIM_CACHE: dict = {}
+
+
+def _load_qwen3_5_similarity(layer_idx: int) -> "torch.Tensor | None":
+    """Load the per-layer similarity matrix for Qwen3.5-MoE from the .pt named by
+    $SERE_SIMILARITY_PT (disk-clean: we serve the base checkpoint and inject the
+    calibrated matrices here instead of baking a 64GB copy)."""
+    path = _os.environ.get("SERE_SIMILARITY_PT")
+    if not path:
+        return None
+    if not _Q35_SIM_CACHE:
+        _Q35_SIM_CACHE.update(torch.load(path, map_location="cpu"))
+    return _Q35_SIM_CACHE.get(layer_idx)
+
+
+def _enable_sere_on_qwen3_5_block(module: nn.Module, prefix: str) -> None:
+    """Qwen3.5-MoE (Qwen3NextSparseMoeBlock) SERE enable: like _enable_sere_on_block
+    but the similarity matrix is loaded from the calibration .pt by layer index
+    (parsed from the module prefix, e.g. model.language_model.layers.7.mlp), and
+    select_top_k/threshold come from env (SERE_SELECT_TOP_K / SERE_THRESHOLD)."""
+    if not hasattr(module, "experts"):
+        return
+    m = _re.search(r"layers\.(\d+)\.", prefix or "")
+    if m is None:
+        return
+    layer_idx = int(m.group(1))
+    sim = _load_qwen3_5_similarity(layer_idx)
+    if sim is None:
+        logger.warning("SERE qwen3_5: no similarity for layer %s (SERE_SIMILARITY_PT set?)", layer_idx)
+        return
+    num_experts = sim.shape[0]
+    module.select_top_k = int(_os.environ.get("SERE_SELECT_TOP_K", "2"))
+    module.threshold = float(_os.environ.get("SERE_THRESHOLD", "0.0"))
+    # Register as NON-PERSISTENT BUFFERS (not Parameters): we inject the calibrated
+    # value here rather than loading from the checkpoint, and vLLM's weight-loader
+    # completeness check flags uninitialized Parameters but ignores buffers. Place
+    # them on the block's own device so the rerouting op's indexing doesn't hit a
+    # CPU/GPU device mismatch.
+    dev = next((p.device for p in module.parameters()), torch.device("cpu"))
+    module.register_buffer(
+        "similarity_matrix", sim.to(torch.float32).clone().to(dev), persistent=False,
+    )
+    module.register_buffer("_high_mask_cache", torch.zeros(num_experts, dtype=torch.bool, device=dev), persistent=False)
+    module.register_buffer("_expert_mapping_cache", torch.zeros(num_experts, dtype=torch.long, device=dev), persistent=False)
+    custom_routing_function = _make_sere_routing_function(
+        module, scoring_func="softmax", e_score_correction_bias=None,
+        routed_scaling_factor=1.0,
+    )
+    _rebuild_router(module.experts, custom_routing_function)
+    logger.info(
+        "Enabled SERE routing for Qwen3.5-MoE layer %s: select_top_k=%s threshold=%s",
+        layer_idx, module.select_top_k, module.threshold,
+    )
+
+
+def _patch_qwen3_5_block_init(block_cls: type[nn.Module]) -> None:
+    if getattr(block_cls, "_sere_v1_patched", False):
+        return
+    original_init = block_cls.__init__
+
+    def patched_init(self: nn.Module, *args: Any, **kwargs: Any) -> None:
+        original_init(self, *args, **kwargs)
+        prefix = kwargs.get("prefix")
+        if prefix is None and len(args) >= 2 and isinstance(args[1], str):
+            prefix = args[1]
+        _enable_sere_on_qwen3_5_block(self, prefix or "")
+
+    block_cls.__init__ = patched_init
+    block_cls._sere_v1_patched = True
+
+
 def patch_vllm_v1_sere() -> None:
     global _PATCHED
     if _PATCHED:
@@ -446,6 +520,15 @@ def patch_vllm_v1_sere() -> None:
     _patch_block_init(qwen2_moe.Qwen2MoeSparseMoeBlock)
     _patch_block_init(qwen3_moe.Qwen3MoeSparseMoeBlock)
     _patch_block_init(deepseek_v2.DeepseekV2MoE)
+    # Qwen3.5-MoE uses qwen3_next's SparseMoeBlock; enable only when calibrated
+    # matrices are provided (SERE_SIMILARITY_PT), so non-SERE qwen3_next serves
+    # are unaffected.
+    if _os.environ.get("SERE_SIMILARITY_PT"):
+        try:
+            from vllm.model_executor.models import qwen3_next
+            _patch_qwen3_5_block_init(qwen3_next.Qwen3NextSparseMoeBlock)
+        except Exception as exc:  # pragma: no cover
+            logger.warning("SERE qwen3_5 block patch skipped: %r", exc)
     _PATCHED = True
 
 
