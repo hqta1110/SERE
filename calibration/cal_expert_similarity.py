@@ -10,16 +10,16 @@ import torch
 import pandas as pd
 import numpy as np
 from transformers import AutoTokenizer, AutoConfig
-from adapted_modeling_qwen2_moe import Qwen2MoeForCausalLM
-from adapted_modeling_qwen3_moe import Qwen3MoeForCausalLM
-from adapted_modeling_deepseek import DeepseekV2ForCausalLM
+# Adapters are imported lazily per model_type: some (qwen3_moe, deepseek) use
+# transformers APIs removed in newer versions, so importing them all at module load
+# would break model_types (e.g. qwen3_5_moe) that need a transformers-main env.
 from utils import print_similarity_statistics
 
 
 def main():
     parser = argparse.ArgumentParser(description='Expert similarity calculation')
     parser.add_argument('--model_type', type=str, required=True, 
-                       choices=['qwen2_moe', 'qwen3_moe', 'deepseek_v2'],
+                       choices=['qwen2_moe', 'qwen3_moe', 'deepseek_v2', 'qwen3_5_moe', 'glm4_moe_lite'],
                        help='Model type')
     parser.add_argument('--model_path', type=str, required=True, help='Original model path')
     parser.add_argument('--output_path', type=str, required=True, help='Output model path')
@@ -70,31 +70,44 @@ def main():
     print(f"Using {len(texts)} qualifying text samples")
     config = AutoConfig.from_pretrained(args.model_path, trust_remote_code=True)
     if args.model_type == "qwen2_moe":
+        from adapted_modeling_qwen2_moe import Qwen2MoeForCausalLM
         model_class = Qwen2MoeForCausalLM
     elif args.model_type == "qwen3_moe":
+        from adapted_modeling_qwen3_moe import Qwen3MoeForCausalLM
         model_class = Qwen3MoeForCausalLM
     elif args.model_type == "deepseek_v2":
+        from adapted_modeling_deepseek import DeepseekV2ForCausalLM
         model_class = DeepseekV2ForCausalLM
+    elif args.model_type == "qwen3_5_moe":
+        from adapted_modeling_qwen3_5_moe import Qwen3_5MoeForCausalLM
+        model_class = Qwen3_5MoeForCausalLM
+    elif args.model_type == "glm4_moe_lite":
+        from adapted_modeling_glm4_moe_lite import Glm4MoeLiteForCausalLM
+        model_class = Glm4MoeLiteForCausalLM
     else:
         raise ValueError(f"Unknown model_type: {args.model_type}!")
 
+    # qwen3.5-moe is a ~64GB multimodal model -> shard across GPUs.
+    device_map = 'auto' if args.model_type in ("qwen3_5_moe", "glm4_moe_lite") else 'cuda'
     model = model_class.from_pretrained(
-        args.model_path, 
-        torch_dtype=torch.bfloat16, 
-        device_map='cuda',
+        args.model_path,
+        torch_dtype=torch.bfloat16,
+        device_map=device_map,
         trust_remote_code=True
     )
     model.eval()
-    # Prefill-only calibration -> no KV cache needed. Disabling it avoids the
-    # stale Cache API in the adapted DeepSeek modeling (get_usable_length etc.,
-    # written for an older transformers).
-    model.config.use_cache = False
+
+    # The text decoder layers: qwen3.5-moe nests them under language_model.
+    if args.model_type == "qwen3_5_moe":
+        decoder_layers = model.model.language_model.layers
+    else:
+        decoder_layers = model.model.layers
 
     # Enable similarity computation for all MoE layers
     print("Configuring similarity computation...")
     moe_layers = []
     layer_indices = []
-    for layer_idx, layer in enumerate(model.model.layers):
+    for layer_idx, layer in enumerate(decoder_layers):
         if hasattr(layer.mlp, 'enable_similarity_computation'):
             layer.mlp.enable_similarity_computation(
                 method=args.similarity_method,
@@ -154,8 +167,11 @@ def main():
     print("\nSaving model...")
     os.makedirs(args.output_path, exist_ok=True)
 
-    # Save model with similarity matrices
-    model.save_pretrained(args.output_path)
+    # Save model with similarity matrices. For qwen3_5_moe the SERE serve-side is a
+    # plugin monkeypatch that loads similarity_matrices.pt into the BASE checkpoint,
+    # so we skip the ~64GB full-model copy (disk) and only emit the matrices.
+    if args.model_type not in ("qwen3_5_moe", "glm4_moe_lite"):
+        model.save_pretrained(args.output_path)
     tokenizer.save_pretrained(args.output_path)
 
     # Save similarity matrices

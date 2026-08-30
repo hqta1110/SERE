@@ -481,12 +481,25 @@ def _extract_prefix(args: tuple, kwargs: dict) -> str:
     return p if isinstance(p, str) else ""
 
 
-def _enable_sere_via_injection(module: nn.Module, prefix: str, config: Any = None) -> None:
+def _enable_sere_via_injection(
+    module: nn.Module,
+    prefix: str,
+    config: Any = None,
+    *,
+    scoring_func_override: str | None = None,
+    routed_scaling_override: float | None = None,
+) -> None:
     """SERE enable that INJECTS the similarity matrix from the calibration .pt by
     layer index (parsed from the module prefix), instead of loading it from the
     checkpoint. Uniform across families (qwen2_moe / qwen3_moe / deepseek_v2 /
-    qwen3_next). select_top_k / threshold come from env; scoring params from config
-    when available (falls back to softmax / no-bias / scale 1.0)."""
+    qwen3_next / glm4_moe[_lite]). select_top_k / threshold come from env; scoring
+    params from config when available (falls back to softmax / no-bias / scale 1.0).
+
+    ``scoring_func_override`` / ``routed_scaling_override`` let a caller pin those
+    two routing params explicitly. GLM-4.7-Flash needs both: its router is sigmoid,
+    and its block applies ``routed_scaling_factor`` to the MoE *output* while the
+    inner FusedMoE routes at scale 1.0 -- so the routing weights must use 1.0, not
+    the block's ``routed_scaling_factor`` (1.8), or the reroute mass is double-scaled."""
     if not hasattr(module, "experts"):
         return
     m = _re.search(r"layers\.(\d+)\.", prefix or "")
@@ -510,8 +523,14 @@ def _enable_sere_via_injection(module: nn.Module, prefix: str, config: Any = Non
     module.register_buffer("_high_mask_cache", torch.zeros(num_experts, dtype=torch.bool, device=dev), persistent=False)
     module.register_buffer("_expert_mapping_cache", torch.zeros(num_experts, dtype=torch.long, device=dev), persistent=False)
 
-    scoring_func = getattr(config, "scoring_func", "softmax") if config is not None else "softmax"
-    routed_scaling_factor = float(getattr(module, "routed_scaling_factor", 1.0))
+    scoring_func = scoring_func_override or (
+        getattr(config, "scoring_func", "softmax") if config is not None else "softmax"
+    )
+    routed_scaling_factor = (
+        float(routed_scaling_override)
+        if routed_scaling_override is not None
+        else float(getattr(module, "routed_scaling_factor", 1.0))
+    )
     gate = getattr(module, "gate", None)
     e_score_correction_bias = getattr(gate, "e_score_correction_bias", None)
     if isinstance(e_score_correction_bias, nn.Parameter):
@@ -542,6 +561,31 @@ def _patch_qwen3_5_block_init(block_cls: type[nn.Module]) -> None:
     block_cls._sere_v1_patched = True
 
 
+def _patch_glm_block_init(block_cls: type[nn.Module]) -> None:
+    """GLM-4.7-Flash (glm4_moe_lite; block class ``Glm4MoE``, ``Glm4MoeLite`` is a
+    bare subclass). Injection-only, like qwen3_5. Two GLM-specific pins:
+      * scoring_func = "sigmoid" (GLM router; the generic path would default softmax);
+      * routed_scaling = 1.0 for the routing weights -- the block applies
+        config.routed_scaling_factor (1.8) to the MoE output separately.
+    Grouped-topk needs NO special handling here: GLM has n_group=1 / topk_group=1, so
+    grouped-topk degenerates to plain top-k and ``fused_topk_bias`` (sigmoid + bias +
+    renormalize) reproduces GLM's native selection exactly. Dense layers
+    (first_k_dense_replace) use Glm4MoeMLP and are never constructed as this block."""
+    if getattr(block_cls, "_sere_v1_patched", False):
+        return
+    original_init = block_cls.__init__
+
+    def patched_init(self: nn.Module, *args: Any, **kwargs: Any) -> None:
+        original_init(self, *args, **kwargs)
+        _enable_sere_via_injection(
+            self, _extract_prefix(args, kwargs),
+            scoring_func_override="sigmoid", routed_scaling_override=1.0,
+        )
+
+    block_cls.__init__ = patched_init
+    block_cls._sere_v1_patched = True
+
+
 def patch_vllm_v1_sere() -> None:
     global _PATCHED
     if _PATCHED:
@@ -560,6 +604,13 @@ def patch_vllm_v1_sere() -> None:
             _patch_qwen3_5_block_init(qwen3_next.Qwen3NextSparseMoeBlock)
         except Exception as exc:  # pragma: no cover
             logger.warning("SERE qwen3_5 block patch skipped: %r", exc)
+        # GLM-4.7-Flash (glm4_moe_lite): the Lite MoE block is `Glm4MoE`
+        # (Glm4MoeLite is a bare subclass), injection-only like qwen3_5.
+        try:
+            from vllm.model_executor.models import glm4_moe
+            _patch_glm_block_init(glm4_moe.Glm4MoE)
+        except Exception as exc:  # pragma: no cover
+            logger.warning("SERE glm block patch skipped: %r", exc)
     _PATCHED = True
 
 

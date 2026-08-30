@@ -1,0 +1,344 @@
+05/27 16:53:06 - OpenCompass - INFO - Task [qwen2-moe-sere-humaneval/openai_humaneval]
+INFO 05-27 16:53:09 [__init__.py:239] Automatically detected platform cuda.
+INFO 05-27 16:53:10 [__init__.py:30] Available plugins for group vllm.general_plugins:
+INFO 05-27 16:53:10 [__init__.py:32] name=register_SERE_vllm, value=SERE_vllm:register
+INFO 05-27 16:53:10 [__init__.py:34] all available plugins for group vllm.general_plugins will be loaded.
+INFO 05-27 16:53:10 [__init__.py:36] set environment variable VLLM_PLUGINS to control which plugins to load.
+INFO 05-27 16:53:10 [__init__.py:44] plugin register_SERE_vllm loaded.
+INFO 05-27 16:53:10 [config.py:428] Overriding HF config with {'architectures': ['Qwen2MoeForCausalLMSERE'], 'select_top_k': 2, 'threshold': 0.1}
+INFO 05-27 16:53:19 [config.py:689] This model supports multiple tasks: {'classify', 'embed', 'score', 'generate', 'reward'}. Defaulting to 'generate'.
+INFO 05-27 16:53:19 [llm_engine.py:243] Initializing a V0 LLM engine (v0.8.4) with config: model='/home/PC/SERE/calibration/output/qwen2_moe_similarity', speculative_config=None, tokenizer='/home/PC/SERE/calibration/output/qwen2_moe_similarity', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, kv_cache_dtype=auto,  device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='xgrammar', reasoning_backend=None), observability_config=ObservabilityConfig(show_hidden_metrics=False, otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=None, served_model_name=/home/PC/SERE/calibration/output/qwen2_moe_similarity, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=None, chunked_prefill_enabled=False, use_async_output_proc=True, disable_mm_preprocessor_cache=False, mm_processor_kwargs=None, pooler_config=None, compilation_config={"splitting_ops":[],"compile_sizes":[],"cudagraph_capture_sizes":[256,248,240,232,224,216,208,200,192,184,176,168,160,152,144,136,128,120,112,104,96,88,80,72,64,56,48,40,32,24,16,8,4,2,1],"max_capture_size":256}, use_cached_outputs=False, 
+INFO 05-27 16:53:22 [cuda.py:292] Using Flash Attention backend.
+INFO 05-27 16:53:22 [parallel_state.py:959] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, TP rank 0
+INFO 05-27 16:53:22 [model_runner.py:1110] Starting to load model /home/PC/SERE/calibration/output/qwen2_moe_similarity...
+Loading safetensors checkpoint shards:   0% Completed | 0/6 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards:  17% Completed | 1/6 [00:01<00:07,  1.52s/it]
+Loading safetensors checkpoint shards:  33% Completed | 2/6 [00:03<00:06,  1.56s/it]
+Loading safetensors checkpoint shards:  50% Completed | 3/6 [00:04<00:04,  1.58s/it]
+Loading safetensors checkpoint shards:  67% Completed | 4/6 [00:05<00:02,  1.42s/it]
+Loading safetensors checkpoint shards:  83% Completed | 5/6 [00:07<00:01,  1.48s/it]
+Loading safetensors checkpoint shards: 100% Completed | 6/6 [00:09<00:00,  1.53s/it]
+Loading safetensors checkpoint shards: 100% Completed | 6/6 [00:09<00:00,  1.52s/it]
+
+INFO 05-27 16:53:32 [loader.py:458] Loading weights took 9.17 seconds
+INFO 05-27 16:53:32 [model_runner.py:1146] Model loading took 26.6684 GiB and 9.456628 seconds
+WARNING 05-27 16:53:33 [fused_moe.py:670] Using default MoE config. Performance might be sub-optimal! Config file not found at /home/PC/miniconda3/envs/sere/lib/python3.10/site-packages/vllm/model_executor/layers/fused_moe/configs/E=60,N=1408,device_name=NVIDIA_A100-SXM4-40GB.json
+INFO 05-27 16:53:35 [worker.py:267] Memory profiling takes 2.32 seconds
+INFO 05-27 16:53:35 [worker.py:267] the current vLLM instance can use total_gpu_memory (39.49GiB) x gpu_memory_utilization (0.80) = 31.59GiB
+INFO 05-27 16:53:35 [worker.py:267] model weights take 26.67GiB; non_torch_memory takes 0.09GiB; PyTorch activation peak memory takes 1.42GiB; the rest of the memory reserved for KV Cache is 3.42GiB.
+INFO 05-27 16:53:35 [executor_base.py:112] # cuda blocks: 1166, # CPU blocks: 1365
+INFO 05-27 16:53:35 [executor_base.py:117] Maximum concurrency for 8192 tokens per request: 2.28x
+INFO 05-27 16:53:38 [model_runner.py:1456] Capturing cudagraphs for decoding. This may lead to unexpected consequences if the model is not static. To run the model in eager mode, set 'enforce_eager=True' or use '--enforce-eager' in the CLI. If out-of-memory error occurs during cudagraph capture, consider decreasing `gpu_memory_utilization` or switching to eager mode. You can also reduce the `max_num_seqs` as needed to decrease memory usage.
+Capturing CUDA graph shapes:   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graph shapes:   3%|▎         | 1/35 [00:00<00:22,  1.49it/s]Capturing CUDA graph shapes:   6%|▌         | 2/35 [00:01<00:21,  1.52it/s]Capturing CUDA graph shapes:   9%|▊         | 3/35 [00:01<00:21,  1.52it/s]Capturing CUDA graph shapes:  11%|█▏        | 4/35 [00:02<00:20,  1.51it/s]Capturing CUDA graph shapes:  14%|█▍        | 5/35 [00:03<00:19,  1.51it/s]Capturing CUDA graph shapes:  17%|█▋        | 6/35 [00:03<00:19,  1.51it/s]Capturing CUDA graph shapes:  20%|██        | 7/35 [00:04<00:18,  1.52it/s]Capturing CUDA graph shapes:  23%|██▎       | 8/35 [00:05<00:18,  1.49it/s]Capturing CUDA graph shapes:  26%|██▌       | 9/35 [00:05<00:17,  1.50it/s]Capturing CUDA graph shapes:  29%|██▊       | 10/35 [00:06<00:16,  1.51it/s]Capturing CUDA graph shapes:  31%|███▏      | 11/35 [00:07<00:15,  1.53it/s]Capturing CUDA graph shapes:  34%|███▍      | 12/35 [00:07<00:15,  1.53it/s]Capturing CUDA graph shapes:  37%|███▋      | 13/35 [00:08<00:14,  1.54it/s]Capturing CUDA graph shapes:  40%|████      | 14/35 [00:09<00:13,  1.55it/s]Capturing CUDA graph shapes:  43%|████▎     | 15/35 [00:09<00:12,  1.55it/s]Capturing CUDA graph shapes:  46%|████▌     | 16/35 [00:10<00:12,  1.56it/s]Capturing CUDA graph shapes:  49%|████▊     | 17/35 [00:11<00:11,  1.56it/s]Capturing CUDA graph shapes:  51%|█████▏    | 18/35 [00:11<00:10,  1.56it/s]Capturing CUDA graph shapes:  54%|█████▍    | 19/35 [00:12<00:10,  1.56it/s]Capturing CUDA graph shapes:  57%|█████▋    | 20/35 [00:13<00:09,  1.56it/s]Capturing CUDA graph shapes:  60%|██████    | 21/35 [00:13<00:09,  1.55it/s]Capturing CUDA graph shapes:  63%|██████▎   | 22/35 [00:14<00:08,  1.55it/s]Capturing CUDA graph shapes:  66%|██████▌   | 23/35 [00:14<00:07,  1.56it/s]Capturing CUDA graph shapes:  69%|██████▊   | 24/35 [00:15<00:07,  1.56it/s]Capturing CUDA graph shapes:  71%|███████▏  | 25/35 [00:16<00:06,  1.55it/s]Capturing CUDA graph shapes:  74%|███████▍  | 26/35 [00:16<00:05,  1.55it/s]Capturing CUDA graph shapes:  77%|███████▋  | 27/35 [00:17<00:05,  1.56it/s]Capturing CUDA graph shapes:  80%|████████  | 28/35 [00:18<00:04,  1.56it/s]Capturing CUDA graph shapes:  83%|████████▎ | 29/35 [00:18<00:03,  1.56it/s]Capturing CUDA graph shapes:  86%|████████▌ | 30/35 [00:19<00:03,  1.56it/s]Capturing CUDA graph shapes:  89%|████████▊ | 31/35 [00:20<00:02,  1.56it/s]Capturing CUDA graph shapes:  91%|█████████▏| 32/35 [00:20<00:01,  1.54it/s]Capturing CUDA graph shapes:  94%|█████████▍| 33/35 [00:21<00:01,  1.54it/s]Capturing CUDA graph shapes:  97%|█████████▋| 34/35 [00:22<00:00,  1.54it/s]Capturing CUDA graph shapes: 100%|██████████| 35/35 [00:22<00:00,  1.54it/s]Capturing CUDA graph shapes: 100%|██████████| 35/35 [00:22<00:00,  1.54it/s]
+INFO 05-27 16:54:01 [model_runner.py:1598] Graph capturing finished in 23 secs, took 0.28 GiB
+INFO 05-27 16:54:01 [llm_engine.py:449] init engine (profile, create kv cache, warmup model) took 28.59 seconds
+05/27 16:54:01 - OpenCompass - INFO - The Progress of This Task --> Models: 1/1, Datasets: 1/1
+05/27 16:54:01 - OpenCompass - INFO - Try to load the data from /home/PC/.cache/opencompass/./data/humaneval/human-eval-v2-20210705.jsonl
+Map:   0%|          | 0/164 [00:00<?, ? examples/s]Map: 100%|██████████| 164/164 [00:00<00:00, 12156.76 examples/s]
+05/27 16:54:01 - OpenCompass - INFO - Start inferencing [qwen2-moe-sere-humaneval/openai_humaneval]
+[2026-05-27 16:54:01,925] [opencompass.openicl.icl_inferencer.icl_gen_inferencer] [INFO] Starting build dataloader
+[2026-05-27 16:54:01,926] [opencompass.openicl.icl_inferencer.icl_gen_inferencer] [INFO] Starting inference process...
+  0%|          | 0/41 [00:00<?, ?it/s]05/27 16:54:01 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:01 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:00<00:02,  1.15it/s, est. speed input: 118.32 toks/s, output: 101.09 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:04,  2.12s/it, est. speed input: 61.11 toks/s, output: 129.98 toks/s] [A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.51s/it, est. speed input: 81.41 toks/s, output: 218.38 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.16s/it, est. speed input: 110.91 toks/s, output: 328.63 toks/s]
+  2%|▏         | 1/41 [00:04<03:06,  4.67s/it]05/27 16:54:06 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:06 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:00<00:02,  1.03it/s, est. speed input: 112.91 toks/s, output: 105.72 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:03,  1.52s/it, est. speed input: 83.40 toks/s, output: 143.86 toks/s] [A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.10s/it, est. speed input: 101.08 toks/s, output: 230.38 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.01s/it, est. speed input: 111.77 toks/s, output: 301.73 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.09s/it, est. speed input: 111.77 toks/s, output: 301.73 toks/s]
+  5%|▍         | 2/41 [00:09<02:54,  4.48s/it]05/27 16:54:10 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:10 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:03,  1.20s/it, est. speed input: 107.89 toks/s, output: 107.06 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:01,  1.02it/s, est. speed input: 113.01 toks/s, output: 171.47 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.59s/it, est. speed input: 79.96 toks/s, output: 197.82 toks/s] [AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.09s/it, est. speed input: 116.71 toks/s, output: 315.43 toks/s]
+  7%|▋         | 3/41 [00:13<02:48,  4.43s/it]05/27 16:54:15 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:15 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:00<00:02,  1.11it/s, est. speed input: 95.73 toks/s, output: 105.74 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.62it/s, est. speed input: 156.51 toks/s, output: 179.30 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:02<00:00,  1.35it/s, est. speed input: 128.31 toks/s, output: 222.17 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.15s/it, est. speed input: 93.72 toks/s, output: 251.76 toks/s] [AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.00it/s, est. speed input: 93.72 toks/s, output: 251.76 toks/s]
+ 10%|▉         | 4/41 [00:17<02:37,  4.25s/it]05/27 16:54:19 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:19 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:07,  2.46s/it, est. speed input: 35.82 toks/s, output: 107.46 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:02<00:00,  1.36it/s, est. speed input: 116.56 toks/s, output: 303.72 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:02<00:00,  1.80it/s, est. speed input: 172.83 toks/s, output: 393.39 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:02<00:00,  1.36it/s, est. speed input: 172.83 toks/s, output: 393.39 toks/s]
+ 12%|█▏        | 5/41 [00:20<02:16,  3.78s/it]05/27 16:54:22 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:22 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:00<00:02,  1.14it/s, est. speed input: 69.68 toks/s, output: 105.09 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.01it/s, est. speed input: 125.80 toks/s, output: 155.06 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.63s/it, est. speed input: 89.41 toks/s, output: 187.58 toks/s] [AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.08s/it, est. speed input: 114.75 toks/s, output: 305.55 toks/s]
+ 15%|█▍        | 6/41 [00:24<02:19,  3.97s/it]05/27 16:54:26 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:26 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:03,  1.08s/it, est. speed input: 61.09 toks/s, output: 106.44 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.33s/it, est. speed input: 82.06 toks/s, output: 152.89 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.22s/it, est. speed input: 85.58 toks/s, output: 221.31 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.00it/s, est. speed input: 88.93 toks/s, output: 305.81 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.08s/it, est. speed input: 88.93 toks/s, output: 305.81 toks/s]
+ 17%|█▋        | 7/41 [00:28<02:19,  4.09s/it]05/27 16:54:30 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:30 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:03,  1.19s/it, est. speed input: 113.91 toks/s, output: 106.37 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.52it/s, est. speed input: 143.09 toks/s, output: 193.27 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:01<00:00,  2.12it/s, est. speed input: 183.03 toks/s, output: 275.12 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:02<00:00,  2.23it/s, est. speed input: 205.87 toks/s, output: 339.21 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:02<00:00,  1.87it/s, est. speed input: 205.87 toks/s, output: 339.21 toks/s]
+ 20%|█▉        | 8/41 [00:31<01:54,  3.47s/it]05/27 16:54:33 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:33 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:03<00:09,  3.16s/it, est. speed input: 53.14 toks/s, output: 107.54 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:04<00:04,  2.24s/it, est. speed input: 94.00 toks/s, output: 179.17 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.19s/it, est. speed input: 136.05 toks/s, output: 394.48 toks/s]
+ 22%|██▏       | 9/41 [00:35<02:03,  3.87s/it]05/27 16:54:37 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:37 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:06,  2.09s/it, est. speed input: 48.84 toks/s, output: 107.25 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.35s/it, est. speed input: 95.33 toks/s, output: 184.49 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:00,  1.28it/s, est. speed input: 130.83 toks/s, output: 286.49 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.31it/s, est. speed input: 175.91 toks/s, output: 392.51 toks/s]
+ 24%|██▍       | 10/41 [00:38<01:52,  3.62s/it]05/27 16:54:40 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:40 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:04,  1.47s/it, est. speed input: 89.34 toks/s, output: 106.39 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:02<00:00,  1.19it/s, est. speed input: 175.76 toks/s, output: 231.03 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.21it/s, est. speed input: 185.81 toks/s, output: 300.94 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.14it/s, est. speed input: 185.81 toks/s, output: 300.94 toks/s]
+ 27%|██▋       | 11/41 [00:42<01:47,  3.59s/it]05/27 16:54:44 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:44 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:03<00:10,  3.51s/it, est. speed input: 32.74 toks/s, output: 107.05 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:04<00:04,  2.19s/it, est. speed input: 37.54 toks/s, output: 186.22 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.19s/it, est. speed input: 98.14 toks/s, output: 400.95 toks/s]
+ 29%|██▉       | 12/41 [00:47<01:54,  3.95s/it]05/27 16:54:49 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:49 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:03,  1.18s/it, est. speed input: 113.99 toks/s, output: 106.33 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.49it/s, est. speed input: 183.40 toks/s, output: 190.76 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:01<00:00,  2.43it/s, est. speed input: 239.87 toks/s, output: 286.84 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.17s/it, est. speed input: 120.21 toks/s, output: 247.03 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.02it/s, est. speed input: 120.21 toks/s, output: 247.03 toks/s]
+ 32%|███▏      | 13/41 [00:51<01:50,  3.94s/it]05/27 16:54:53 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:53 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:00<00:01,  1.90it/s, est. speed input: 137.11 toks/s, output: 102.83 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.67it/s, est. speed input: 123.41 toks/s, output: 153.20 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:02<00:01,  1.01s/it, est. speed input: 113.27 toks/s, output: 185.42 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.14s/it, est. speed input: 100.58 toks/s, output: 250.33 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.01s/it, est. speed input: 100.58 toks/s, output: 250.33 toks/s]
+ 34%|███▍      | 14/41 [00:55<01:47,  3.97s/it]05/27 16:54:57 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:54:57 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:08,  2.83s/it, est. speed input: 30.71 toks/s, output: 107.65 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:00,  1.11it/s, est. speed input: 103.04 toks/s, output: 296.92 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.05it/s, est. speed input: 103.42 toks/s, output: 343.82 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.08s/it, est. speed input: 103.42 toks/s, output: 343.82 toks/s]
+ 37%|███▋      | 15/41 [00:59<01:46,  4.08s/it]05/27 16:55:01 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:01 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:03,  1.21s/it, est. speed input: 100.93 toks/s, output: 105.89 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.37it/s, est. speed input: 181.33 toks/s, output: 186.95 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:01<00:00,  1.81it/s, est. speed input: 204.07 toks/s, output: 264.21 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.14s/it, est. speed input: 131.55 toks/s, output: 257.08 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.00it/s, est. speed input: 131.55 toks/s, output: 257.08 toks/s]
+ 39%|███▉      | 16/41 [01:03<01:41,  4.05s/it]05/27 16:55:05 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:05 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:05,  1.77s/it, est. speed input: 77.97 toks/s, output: 106.78 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.05s/it, est. speed input: 104.34 toks/s, output: 188.85 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.09s/it, est. speed input: 140.49 toks/s, output: 240.22 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.01it/s, est. speed input: 147.07 toks/s, output: 313.51 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.07s/it, est. speed input: 147.07 toks/s, output: 313.51 toks/s]
+ 41%|████▏     | 17/41 [01:07<01:39,  4.13s/it]05/27 16:55:09 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:09 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:08,  2.84s/it, est. speed input: 49.58 toks/s, output: 106.54 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:02,  1.29s/it, est. speed input: 92.87 toks/s, output: 206.08 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.74it/s, est. speed input: 239.14 toks/s, output: 395.67 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.20it/s, est. speed input: 239.14 toks/s, output: 395.67 toks/s]
+ 44%|████▍     | 18/41 [01:11<01:29,  3.89s/it]05/27 16:55:13 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:13 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:07,  2.35s/it, est. speed input: 43.01 toks/s, output: 106.89 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:03,  1.58s/it, est. speed input: 102.89 toks/s, output: 181.32 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.37s/it, est. speed input: 123.86 toks/s, output: 247.95 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.14s/it, est. speed input: 161.07 toks/s, output: 357.86 toks/s]
+ 46%|████▋     | 19/41 [01:15<01:30,  4.10s/it]05/27 16:55:17 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:17 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:05,  1.93s/it, est. speed input: 85.65 toks/s, output: 106.41 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:01,  1.03it/s, est. speed input: 145.54 toks/s, output: 198.38 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.44s/it, est. speed input: 155.39 toks/s, output: 220.34 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.07it/s, est. speed input: 179.83 toks/s, output: 329.34 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.10s/it, est. speed input: 179.83 toks/s, output: 329.34 toks/s]
+ 49%|████▉     | 20/41 [01:20<01:27,  4.19s/it]05/27 16:55:22 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:22 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:00<00:02,  1.02it/s, est. speed input: 63.43 toks/s, output: 105.38 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.08it/s, est. speed input: 86.49 toks/s, output: 162.78 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.63s/it, est. speed input: 69.09 toks/s, output: 187.70 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.09s/it, est. speed input: 135.41 toks/s, output: 305.60 toks/s]
+ 51%|█████     | 21/41 [01:24<01:24,  4.23s/it]05/27 16:55:26 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:26 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:07,  2.65s/it, est. speed input: 27.53 toks/s, output: 107.10 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:03,  1.72s/it, est. speed input: 63.91 toks/s, output: 183.66 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.00s/it, est. speed input: 133.16 toks/s, output: 284.94 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.16it/s, est. speed input: 146.75 toks/s, output: 357.25 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.13s/it, est. speed input: 146.75 toks/s, output: 357.25 toks/s]
+ 54%|█████▎    | 22/41 [01:29<01:22,  4.32s/it]05/27 16:55:30 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:30 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:05,  1.74s/it, est. speed input: 71.95 toks/s, output: 107.06 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:02<00:00,  1.71it/s, est. speed input: 188.37 toks/s, output: 289.47 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.22it/s, est. speed input: 183.46 toks/s, output: 304.08 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.19it/s, est. speed input: 183.46 toks/s, output: 304.08 toks/s]
+ 56%|█████▌    | 23/41 [01:32<01:12,  4.04s/it]05/27 16:55:34 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:34 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:06,  2.14s/it, est. speed input: 71.63 toks/s, output: 106.27 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:02,  1.42s/it, est. speed input: 112.88 toks/s, output: 181.47 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.13s/it, est. speed input: 122.88 toks/s, output: 255.15 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.09it/s, est. speed input: 183.91 toks/s, output: 335.82 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.11s/it, est. speed input: 183.91 toks/s, output: 335.82 toks/s]
+ 59%|█████▊    | 24/41 [01:36<01:10,  4.16s/it]05/27 16:55:38 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:38 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:03<00:09,  3.00s/it, est. speed input: 29.99 toks/s, output: 107.63 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:00,  1.12it/s, est. speed input: 119.15 toks/s, output: 305.74 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.20it/s, est. speed input: 173.08 toks/s, output: 413.18 toks/s]
+ 61%|██████    | 25/41 [01:40<01:02,  3.91s/it]05/27 16:55:42 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:42 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:06,  2.26s/it, est. speed input: 59.33 toks/s, output: 107.59 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.12s/it, est. speed input: 116.62 toks/s, output: 201.57 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.45s/it, est. speed input: 101.91 toks/s, output: 233.12 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.11s/it, est. speed input: 128.28 toks/s, output: 348.53 toks/s]
+ 63%|██████▎   | 26/41 [01:44<01:01,  4.07s/it]05/27 16:55:46 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:46 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:07,  2.48s/it, est. speed input: 58.16 toks/s, output: 106.63 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:03,  1.52s/it, est. speed input: 113.05 toks/s, output: 186.42 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.28s/it, est. speed input: 155.39 toks/s, output: 254.44 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.16it/s, est. speed input: 177.53 toks/s, output: 355.50 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.14s/it, est. speed input: 177.53 toks/s, output: 355.50 toks/s]
+ 66%|██████▌   | 27/41 [01:49<00:59,  4.21s/it]05/27 16:55:51 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:51 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:03<00:09,  3.18s/it, est. speed input: 53.16 toks/s, output: 106.01 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:03,  1.58s/it, est. speed input: 105.39 toks/s, output: 198.71 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.32s/it, est. speed input: 114.15 toks/s, output: 266.20 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.16s/it, est. speed input: 182.41 toks/s, output: 376.44 toks/s]
+ 68%|██████▊   | 28/41 [01:53<00:56,  4.35s/it]05/27 16:55:55 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:55 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:07,  2.52s/it, est. speed input: 71.53 toks/s, output: 106.10 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:03,  1.74s/it, est. speed input: 76.91 toks/s, output: 166.45 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.08s/it, est. speed input: 157.54 toks/s, output: 251.57 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.01s/it, est. speed input: 205.04 toks/s, output: 345.84 toks/s]
+ 71%|███████   | 29/41 [01:57<00:51,  4.26s/it]05/27 16:55:59 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:55:59 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:06,  2.29s/it, est. speed input: 86.83 toks/s, output: 107.34 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.29s/it, est. speed input: 127.02 toks/s, output: 192.95 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:00,  1.07it/s, est. speed input: 163.46 toks/s, output: 274.40 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.43it/s, est. speed input: 198.46 toks/s, output: 362.85 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.07it/s, est. speed input: 198.46 toks/s, output: 362.85 toks/s]
+ 73%|███████▎  | 30/41 [02:01<00:45,  4.10s/it]05/27 16:56:03 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:03 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:03,  1.22s/it, est. speed input: 99.08 toks/s, output: 105.63 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.20s/it, est. speed input: 114.97 toks/s, output: 160.80 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.09s/it, est. speed input: 156.12 toks/s, output: 227.06 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.18it/s, est. speed input: 225.31 toks/s, output: 337.53 toks/s]
+ 76%|███████▌  | 31/41 [02:05<00:38,  3.90s/it]05/27 16:56:06 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:06 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:06,  2.10s/it, est. speed input: 75.74 toks/s, output: 105.75 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:04<00:04,  2.44s/it, est. speed input: 97.40 toks/s, output: 153.42 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.20s/it, est. speed input: 210.06 toks/s, output: 367.44 toks/s]
+ 78%|███████▊  | 32/41 [02:09<00:37,  4.17s/it]05/27 16:56:11 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:11 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:04,  1.62s/it, est. speed input: 56.82 toks/s, output: 105.61 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.17s/it, est. speed input: 133.03 toks/s, output: 212.84 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.02it/s, est. speed input: 211.10 toks/s, output: 302.44 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.06s/it, est. speed input: 211.10 toks/s, output: 302.44 toks/s]
+ 80%|████████  | 33/41 [02:14<00:33,  4.20s/it]05/27 16:56:15 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:15 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:07,  2.50s/it, est. speed input: 60.44 toks/s, output: 107.26 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.19s/it, est. speed input: 118.94 toks/s, output: 204.00 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.42s/it, est. speed input: 108.55 toks/s, output: 241.28 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.12s/it, est. speed input: 135.63 toks/s, output: 355.86 toks/s]
+ 83%|████████▎ | 34/41 [02:18<00:29,  4.28s/it]05/27 16:56:20 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:20 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:04,  1.35s/it, est. speed input: 70.16 toks/s, output: 106.34 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.34it/s, est. speed input: 125.48 toks/s, output: 193.00 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:02<00:00,  1.13it/s, est. speed input: 135.43 toks/s, output: 233.05 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:02<00:00,  1.59it/s, est. speed input: 177.04 toks/s, output: 331.15 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:02<00:00,  1.35it/s, est. speed input: 177.04 toks/s, output: 331.15 toks/s]
+ 85%|████████▌ | 35/41 [02:21<00:23,  3.89s/it]05/27 16:56:23 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:23 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:05,  1.99s/it, est. speed input: 62.42 toks/s, output: 106.73 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:03,  1.73s/it, est. speed input: 100.56 toks/s, output: 167.22 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:04<00:01,  1.42s/it, est. speed input: 118.71 toks/s, output: 240.46 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.15s/it, est. speed input: 155.07 toks/s, output: 351.96 toks/s]
+ 88%|████████▊ | 36/41 [02:26<00:20,  4.10s/it]05/27 16:56:28 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:28 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:04,  1.58s/it, est. speed input: 93.01 toks/s, output: 106.29 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.18s/it, est. speed input: 129.65 toks/s, output: 174.75 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:02<00:00,  1.15it/s, est. speed input: 154.57 toks/s, output: 255.83 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.63it/s, est. speed input: 201.81 toks/s, output: 350.59 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.25it/s, est. speed input: 201.81 toks/s, output: 350.59 toks/s]
+ 90%|█████████ | 37/41 [02:29<00:15,  3.84s/it]05/27 16:56:31 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:31 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:02<00:08,  2.79s/it, est. speed input: 56.33 toks/s, output: 106.93 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:02<00:00,  1.30it/s, est. speed input: 161.58 toks/s, output: 313.18 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.74it/s, est. speed input: 224.26 toks/s, output: 402.32 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:03<00:00,  1.28it/s, est. speed input: 224.26 toks/s, output: 402.32 toks/s]
+ 93%|█████████▎| 38/41 [02:32<00:10,  3.62s/it]05/27 16:56:34 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:34 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:05,  1.70s/it, est. speed input: 50.48 toks/s, output: 105.66 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:02<00:02,  1.30s/it, est. speed input: 85.79 toks/s, output: 173.05 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:00,  1.07it/s, est. speed input: 149.84 toks/s, output: 256.06 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.00s/it, est. speed input: 179.44 toks/s, output: 308.47 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.08s/it, est. speed input: 179.44 toks/s, output: 308.47 toks/s]
+ 95%|█████████▌| 39/41 [02:36<00:07,  3.84s/it]05/27 16:56:38 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:38 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:03,  1.25s/it, est. speed input: 110.28 toks/s, output: 105.48 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:03<00:03,  1.76s/it, est. speed input: 78.53 toks/s, output: 146.65 toks/s] [A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.16s/it, est. speed input: 149.91 toks/s, output: 238.75 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.04it/s, est. speed input: 156.48 toks/s, output: 318.55 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.12s/it, est. speed input: 156.48 toks/s, output: 318.55 toks/s]
+ 98%|█████████▊| 40/41 [02:41<00:04,  4.03s/it]05/27 16:56:43 - OpenCompass - INFO - Sampling Params of vLLM: 
+05/27 16:56:43 - OpenCompass - INFO - SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=-1, min_p=0.0, seed=None, stop=['<|im_end|>', '<|endoftext|>'], stop_token_ids=[], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=512, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, guided_decoding=None, extra_args=None)
+
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s][A
+Processed prompts:  25%|██▌       | 1/4 [00:01<00:04,  1.47s/it, est. speed input: 87.46 toks/s, output: 106.44 toks/s][A
+Processed prompts:  50%|█████     | 2/4 [00:01<00:01,  1.11it/s, est. speed input: 128.42 toks/s, output: 186.79 toks/s][A
+Processed prompts:  75%|███████▌  | 3/4 [00:03<00:01,  1.34s/it, est. speed input: 124.43 toks/s, output: 212.15 toks/s][A
+Processed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.01it/s, est. speed input: 135.53 toks/s, output: 309.02 toks/s][AProcessed prompts: 100%|██████████| 4/4 [00:04<00:00,  1.07s/it, est. speed input: 135.53 toks/s, output: 309.02 toks/s]
+100%|██████████| 41/41 [02:45<00:00,  4.11s/it]100%|██████████| 41/41 [02:45<00:00,  4.04s/it]
+05/27 16:56:47 - OpenCompass - INFO - time elapsed: 221.06s
+[rank0]:[W527 16:56:48.292291819 ProcessGroupNCCL.cpp:1496] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
