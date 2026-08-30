@@ -1,0 +1,18 @@
+{
+  "task": "gsm8k",
+  "backend": "local-completions",
+  "openai_model": "m",
+  "base_url": "http://127.0.0.1:8910/v1",
+  "lm_eval_completions_url": "http://127.0.0.1:8910/v1/completions",
+  "requested_tasks": [
+    "gsm8k"
+  ],
+  "num_fewshot": null,
+  "math_num_fewshot": null,
+  "limit": null,
+  "max_concurrency": 128,
+  "max_tokens": 256,
+  "confirm_run_unsafe_code": false,
+  "eval_seconds": 149.272,
+  "eval_results": "/home/PC/SERE_v1/results/q15_sweep/q15b_a/gsm8k/run/gsm8k-m-20260808-080328/eval_results.json"
+}

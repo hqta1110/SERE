@@ -1,0 +1,33 @@
+{
+  "created_at": "20260808-074532",
+  "tasks": [
+    "humaneval_base"
+  ],
+  "model_name": "/home/PC/.cache/huggingface/hub/models--Qwen--Qwen3-30B-A3B/snapshots/ad44e777bcd18fa416d9da3bd8f70d33ebb85d39",
+  "local_model_path": "m",
+  "openai_model": "m",
+  "base_url": "http://127.0.0.1:8901/v1",
+  "max_concurrency": 128,
+  "total_elapsed_seconds": 67.394,
+  "output_dir": "/home/PC/SERE_v1/results/acc_warmed/pct_p90p99/humaneval_base/run/humaneval_base-m-20260808-074532",
+  "per_task": {
+    "humaneval_base": {
+      "task": "humaneval_base",
+      "backend": "local-completions",
+      "openai_model": "m",
+      "base_url": "http://127.0.0.1:8901/v1",
+      "lm_eval_completions_url": "http://127.0.0.1:8901/v1/completions",
+      "requested_tasks": [
+        "humaneval"
+      ],
+      "num_fewshot": null,
+      "math_num_fewshot": null,
+      "limit": null,
+      "max_concurrency": 128,
+      "max_tokens": 1024,
+      "confirm_run_unsafe_code": true,
+      "eval_seconds": 67.379,
+      "eval_results": "/home/PC/SERE_v1/results/acc_warmed/pct_p90p99/humaneval_base/run/humaneval_base-m-20260808-074532/eval_results.json"
+    }
+  }
+}

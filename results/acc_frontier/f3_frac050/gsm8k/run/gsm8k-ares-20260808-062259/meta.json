@@ -1,0 +1,18 @@
+{
+  "task": "gsm8k",
+  "backend": "local-completions",
+  "openai_model": "ares",
+  "base_url": "http://127.0.0.1:8600/v1",
+  "lm_eval_completions_url": "http://127.0.0.1:8600/v1/completions",
+  "requested_tasks": [
+    "gsm8k"
+  ],
+  "num_fewshot": null,
+  "math_num_fewshot": null,
+  "limit": null,
+  "max_concurrency": 128,
+  "max_tokens": 256,
+  "confirm_run_unsafe_code": false,
+  "eval_seconds": 114.522,
+  "eval_results": "/home/PC/SERE_v1/results/acc_frontier/f3_frac050/gsm8k/run/gsm8k-ares-20260808-062259/eval_results.json"
+}

@@ -1,0 +1,18 @@
+{
+  "task": "humaneval_base",
+  "backend": "local-completions",
+  "openai_model": "m",
+  "base_url": "http://127.0.0.1:8913/v1",
+  "lm_eval_completions_url": "http://127.0.0.1:8913/v1/completions",
+  "requested_tasks": [
+    "humaneval"
+  ],
+  "num_fewshot": null,
+  "math_num_fewshot": null,
+  "limit": null,
+  "max_concurrency": 128,
+  "max_tokens": 1024,
+  "confirm_run_unsafe_code": true,
+  "eval_seconds": 42.781,
+  "eval_results": "/home/PC/SERE_v1/results/q15_sweep/f010_ks0/humaneval_base/run/humaneval_base-m-20260808-080235/eval_results.json"
+}

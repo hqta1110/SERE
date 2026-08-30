@@ -1,0 +1,33 @@
+{
+  "created_at": "20260808-115656",
+  "tasks": [
+    "math500"
+  ],
+  "model_name": "/home/PC/.cache/huggingface/hub/models--Qwen--Qwen3-30B-A3B/snapshots/ad44e777bcd18fa416d9da3bd8f70d33ebb85d39",
+  "local_model_path": "m",
+  "openai_model": "m",
+  "base_url": "http://127.0.0.1:8800/v1",
+  "max_concurrency": 128,
+  "total_elapsed_seconds": 85.127,
+  "output_dir": "/home/PC/SERE_v1/results/math500/m_base/run/math500-m-20260808-115656",
+  "per_task": {
+    "math500": {
+      "task": "math500",
+      "backend": "local-completions",
+      "openai_model": "m",
+      "base_url": "http://127.0.0.1:8800/v1",
+      "lm_eval_completions_url": "http://127.0.0.1:8800/v1/completions",
+      "requested_tasks": [
+        "minerva_math500"
+      ],
+      "num_fewshot": null,
+      "math_num_fewshot": null,
+      "limit": null,
+      "max_concurrency": 128,
+      "max_tokens": 1024,
+      "confirm_run_unsafe_code": false,
+      "eval_seconds": 85.104,
+      "eval_results": "/home/PC/SERE_v1/results/math500/m_base/run/math500-m-20260808-115656/eval_results.json"
+    }
+  }
+}

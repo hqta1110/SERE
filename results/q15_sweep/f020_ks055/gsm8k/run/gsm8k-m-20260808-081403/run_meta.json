@@ -1,0 +1,33 @@
+{
+  "created_at": "20260808-081403",
+  "tasks": [
+    "gsm8k"
+  ],
+  "model_name": "/home/PC/.cache/huggingface/hub/models--Qwen--Qwen1.5-MoE-A2.7B/snapshots/1a758c50ecb6350748b9ce0a99d2352fd9fc11c9",
+  "local_model_path": "m",
+  "openai_model": "m",
+  "base_url": "http://127.0.0.1:8912/v1",
+  "max_concurrency": 128,
+  "total_elapsed_seconds": 134.672,
+  "output_dir": "/home/PC/SERE_v1/results/q15_sweep/f020_ks055/gsm8k/run/gsm8k-m-20260808-081403",
+  "per_task": {
+    "gsm8k": {
+      "task": "gsm8k",
+      "backend": "local-completions",
+      "openai_model": "m",
+      "base_url": "http://127.0.0.1:8912/v1",
+      "lm_eval_completions_url": "http://127.0.0.1:8912/v1/completions",
+      "requested_tasks": [
+        "gsm8k"
+      ],
+      "num_fewshot": null,
+      "math_num_fewshot": null,
+      "limit": null,
+      "max_concurrency": 128,
+      "max_tokens": 256,
+      "confirm_run_unsafe_code": false,
+      "eval_seconds": 134.584,
+      "eval_results": "/home/PC/SERE_v1/results/q15_sweep/f020_ks055/gsm8k/run/gsm8k-m-20260808-081403/eval_results.json"
+    }
+  }
+}
