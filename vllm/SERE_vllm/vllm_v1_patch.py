@@ -208,6 +208,25 @@ def sere_stats() -> dict:
     return out
 
 
+import atexit as _atexit
+
+
+def _dump_sere_stats_atexit():
+    """On SIGTERM/shutdown, print the cumulative reroute totals to the serve log.
+    No-op unless SERE_COUNT_REROUTE=1, so default behavior is unchanged."""
+    if not _COUNT_REROUTE:
+        return
+    try:
+        s = sere_stats()
+        logger.info("SERE_REROUTE_TOTALS calls=%d slots=%d changed=%d changed_frac=%.4f",
+                    s["calls"], s["slots"], s["changed"], s["changed_frac"])
+    except Exception as e:  # pragma: no cover
+        logger.warning("SERE stats dump failed: %s", e)
+
+
+_atexit.register(_dump_sere_stats_atexit)
+
+
 def _check_similarity_once(similarity_matrix: torch.Tensor) -> None:
     """Fail loudly if the similarity matrix never loaded.
 
