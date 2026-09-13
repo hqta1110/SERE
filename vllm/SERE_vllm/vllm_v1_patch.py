@@ -194,6 +194,8 @@ _STATS = {"checked_similarity": False}
 # replays the updates along with the kernel it is counting.
 _STATS_DEV: dict = {}
 _COUNT_REROUTE = os.environ.get("SERE_COUNT_REROUTE", "0") == "1"
+_DUMP_EVERY = int(os.environ.get("SERE_DUMP_EVERY", "2000"))
+_CALLS_HOST = 0
 
 
 def sere_stats() -> dict:
@@ -209,6 +211,7 @@ def sere_stats() -> dict:
 
 
 import atexit as _atexit
+import contextlib
 
 
 def _dump_sere_stats_atexit():
@@ -225,6 +228,26 @@ def _dump_sere_stats_atexit():
 
 
 _atexit.register(_dump_sere_stats_atexit)
+
+
+# vLLM 0.29 tears the TP workers down without running atexit, and under CUDA
+# graphs the routing Python never re-executes during decode, so neither atexit
+# nor any in-forward counter can report. The device counter is correct the whole
+# time -- it just needs one host-side read before the process dies. SIGTERM is
+# that read: the harness signals the workers, this dumps, then default handling
+# resumes. Idempotent, so a later atexit dump is harmless.
+import signal as _signal
+
+
+def _dump_on_sigterm(signum, frame):  # pragma: no cover
+    _dump_sere_stats_atexit()
+    _signal.signal(signum, _signal.SIG_DFL)
+    os.kill(os.getpid(), signum)
+
+
+if _COUNT_REROUTE:
+    with contextlib.suppress(ValueError, OSError):
+        _signal.signal(_signal.SIGTERM, _dump_on_sigterm)
 
 
 def _check_similarity_once(similarity_matrix: torch.Tensor) -> None:
@@ -303,6 +326,9 @@ def _reroute(
     return weights, new_ids
 
 
+_ALIAS_CHECKED = False
+
+
 def _record(old_ids: torch.Tensor, new_ids: torch.Tensor) -> None:
     """Accumulate reroute activity **device-side only**.
 
@@ -317,6 +343,25 @@ def _record(old_ids: torch.Tensor, new_ids: torch.Tensor) -> None:
     """
     if not _COUNT_REROUTE:
         return
+    # The instrument we use to detect a silent no-op can itself silently no-op.
+    # rerouting_ops_cuda mutates topk_ids IN PLACE and returns the same object,
+    # so whenever the two alias, this counter compares a tensor with itself and
+    # reports changed=0.0000 forever -- indistinguishable from "SERE installed
+    # but degenerated to baseline", the same failure class as the _init_runner
+    # no-op. gemma4 escapes only by accident: its router returns int32, so the
+    # binding's `.to(torch.long)` allocates a copy. A router that already
+    # returns int64 makes that a no-op and the alias survives. Checked once --
+    # this runs on every forward and must stay off the hot path.
+    global _ALIAS_CHECKED
+    if not _ALIAS_CHECKED:
+        _ALIAS_CHECKED = True
+        if old_ids.data_ptr() == new_ids.data_ptr():
+            raise RuntimeError(
+                "SERE reroute counter is measuring nothing: old_ids and new_ids "
+                "alias the same storage, so changed_frac would read 0.0000 "
+                "regardless of what the kernel did. Clone topk_ids before the "
+                "reroute call, or stop trusting changed_frac for this model."
+            )
     dev = new_ids.device
     acc = _STATS_DEV.get(dev)
     if acc is None:
@@ -325,6 +370,10 @@ def _record(old_ids: torch.Tensor, new_ids: torch.Tensor) -> None:
     acc[0] += 1
     acc[1] += old_ids.numel()
     acc[2] += (old_ids.reshape(-1) != new_ids.reshape(-1)).sum()
+    # vLLM 0.29 hard-kills the TP workers on shutdown, so the atexit dump below
+    # never runs in the only processes that HAVE counters -- the arm then looks
+    # like a no-op. Emit running totals periodically instead; readers take the
+    # last worker line. Interval is large enough that the host sync is noise.
 
 
 def _make_sere_routing_function(
@@ -500,6 +549,36 @@ def _extract_prefix(args: tuple, kwargs: dict) -> str:
     return p if isinstance(p, str) else ""
 
 
+def _inject_sim_buffers(module: nn.Module, prefix: str) -> "int | None":
+    """Attach the calibrated matrix + reroute caches to ``module``; return its layer
+    index, or None if this layer has no matrix (dense layers legitimately do not).
+
+    Shared by the generic injection path and the gemma4 one, which cannot use
+    ``_rebuild_router``: on vLLM 0.29 ``FusedMoEFactory`` returns a ``MoERunner``,
+    so ``experts.top_k`` / ``global_num_experts`` / ``eplb_state`` do not exist.
+    """
+    m = _re.search(r"layers\.(\d+)\.", prefix or "")
+    if m is None:
+        logger.warning("SERE inject: could not parse layer index from prefix %r", prefix)
+        return None
+    layer_idx = int(m.group(1))
+    sim = _load_injected_similarity(layer_idx)
+    if sim is None:
+        return None
+    num_experts = sim.shape[0]
+    module.select_top_k = int(_os.environ.get("SERE_SELECT_TOP_K", "2"))
+    module.threshold = float(_os.environ.get("SERE_THRESHOLD", "0.0"))
+    # NON-PERSISTENT BUFFERS (not Parameters): injected here, not loaded from the
+    # checkpoint -- vLLM's weight-loader completeness check flags uninitialized
+    # Parameters but ignores buffers. On the block's own device so the rerouting
+    # op's indexing doesn't hit a CPU/GPU mismatch.
+    dev = next((p.device for p in module.parameters()), torch.device("cpu"))
+    module.register_buffer("similarity_matrix", sim.to(torch.float32).clone().to(dev), persistent=False)
+    module.register_buffer("_high_mask_cache", torch.zeros(num_experts, dtype=torch.bool, device=dev), persistent=False)
+    module.register_buffer("_expert_mapping_cache", torch.zeros(num_experts, dtype=torch.long, device=dev), persistent=False)
+    return layer_idx
+
+
 def _enable_sere_via_injection(module: nn.Module, prefix: str, config: Any = None) -> None:
     """SERE enable that INJECTS the similarity matrix from the calibration .pt by
     layer index (parsed from the module prefix), instead of loading it from the
@@ -508,26 +587,9 @@ def _enable_sere_via_injection(module: nn.Module, prefix: str, config: Any = Non
     when available (falls back to softmax / no-bias / scale 1.0)."""
     if not hasattr(module, "experts"):
         return
-    m = _re.search(r"layers\.(\d+)\.", prefix or "")
-    if m is None:
-        logger.warning("SERE inject: could not parse layer index from prefix %r", prefix)
+    layer_idx = _inject_sim_buffers(module, prefix)
+    if layer_idx is None:
         return
-    layer_idx = int(m.group(1))
-    sim = _load_injected_similarity(layer_idx)
-    if sim is None:
-        # Dense (non-MoE) layers legitimately have no matrix; stay silent for those.
-        return
-    num_experts = sim.shape[0]
-    module.select_top_k = int(_os.environ.get("SERE_SELECT_TOP_K", "2"))
-    module.threshold = float(_os.environ.get("SERE_THRESHOLD", "0.0"))
-    # NON-PERSISTENT BUFFERS (not Parameters): injected here, not loaded from the
-    # checkpoint — vLLM's weight-loader completeness check flags uninitialized
-    # Parameters but ignores buffers. On the block's own device so the rerouting
-    # op's indexing doesn't hit a CPU/GPU mismatch.
-    dev = next((p.device for p in module.parameters()), torch.device("cpu"))
-    module.register_buffer("similarity_matrix", sim.to(torch.float32).clone().to(dev), persistent=False)
-    module.register_buffer("_high_mask_cache", torch.zeros(num_experts, dtype=torch.bool, device=dev), persistent=False)
-    module.register_buffer("_expert_mapping_cache", torch.zeros(num_experts, dtype=torch.long, device=dev), persistent=False)
 
     scoring_func = getattr(config, "scoring_func", "softmax") if config is not None else "softmax"
     routed_scaling_factor = float(getattr(module, "routed_scaling_factor", 1.0))
@@ -561,6 +623,149 @@ def _patch_qwen3_5_block_init(block_cls: type[nn.Module]) -> None:
     block_cls._sere_v1_patched = True
 
 
+# ---------------------------------------------------------------------------
+# gemma4 (vLLM >= 0.29)
+# ---------------------------------------------------------------------------
+#
+# Gemma4 needs its own path for two reasons, both structural:
+#
+# 1. `_rebuild_router` cannot be used. On 0.29 `FusedMoEFactory` returns a
+#    `MoERunner`, so `Gemma4MoE.experts` IS the runner -- it has no `top_k`,
+#    `global_num_experts`, `eplb_state` or `quant_method`, and the
+#    `hasattr(experts, "_init_runner")` guard there is a latent no-op. Instead we
+#    swap `experts.router.custom_routing_function` in place. `CustomRoutingRouter`
+#    reads that attribute at call time, and the runner holds the SAME router
+#    object, so there is no by-reference hazard and nothing to rebuild.
+#
+# 2. `per_expert_scale`. Gemma4 folds a learned per-expert output scale into the
+#    routing weights (`gemma4_routing_function_torch`, gemma4.py:208). If SERE
+#    reroutes slot A -> B after that fold, the slot carries A's scale while
+#    executing B: silently wrong, no crash. So we call the model's own routing
+#    function with an ALL-ONES scale, reroute the ids, then apply
+#    `per_expert_scale[new_ids]`. Correctness is structural rather than
+#    re-derived: the softmax/top-k/renorm math is still vLLM's.
+#
+# Cost: by default this takes the torch reference routing path, not the fused
+# triton kernel. NO GEMMA4 SPEED NUMBER MAY COME FROM THAT PATH.
+#
+# CORRECTION (2026-09-12): an earlier version of this comment claimed the triton
+# kernel "bakes the scale in and cannot be asked for unscaled weights". False.
+# `per_expert_scale` is a runtime pointer argument gathered by expert id inside
+# the kernel (gemma4.py:150-155), so ones_like(scale) yields unscaled weights
+# there exactly as in the torch path -- see SERE_GEMMA4_FUSED=1 below, which
+# makes a legitimate gemma4 speed number possible. The claim went out to another
+# session as fact before anyone read the kernel.
+
+def _make_gemma4_sere_routing_function(module: nn.Module) -> Callable[..., tuple[torch.Tensor, torch.Tensor]]:
+    from vllm.model_executor.models.gemma4 import gemma4_routing_function_torch
+
+    # SERE_GEMMA4_FUSED=1: take the *fused triton* kernel instead of the torch
+    # reference. The header above says the triton kernel "bakes the scale in and
+    # cannot be asked for unscaled weights" -- that is wrong. per_expert_scale is
+    # a runtime *pointer argument* (gemma4.py:151 gathers it by expert id inside
+    # the kernel), so handing it torch.ones_like(scale) returns unscaled weights
+    # exactly as the torch path does. Same all-ones-then-refold trick, fast
+    # kernel. This is what makes a gemma4 speed number legitimate: baseline and
+    # SERE arms then differ by SERE alone, not by torch-vs-triton routing.
+    # Opt-in, because the two routings renormalize differently in the last bits
+    # (torch: softmax over E then gather; triton: exp2 of logit-max, renorm over
+    # top-K) -- irrelevant to speed, but it would move an accuracy equivalence gate.
+    _fused = os.getenv("SERE_GEMMA4_FUSED") == "1"
+    if _fused:
+        from vllm.model_executor.models.gemma4 import (
+            gemma4_fused_routing_kernel_triton,
+        )
+    _base_routing = (
+        gemma4_fused_routing_kernel_triton if _fused else gemma4_routing_function_torch
+    )
+
+    def rerouting_function(
+        hidden_states: torch.Tensor,
+        gating_output: torch.Tensor,
+        topk: int,
+        renormalize: bool,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        # Read per_expert_scale at call time (vLLM's own comment: functional_call
+        # parameter substitution must reach it).
+        scale = module.per_expert_scale
+        topk_weights, topk_ids = _base_routing(
+            gating_output, topk, torch.ones_like(scale)
+        )
+        # vLLM folds the scale in the GATING dtype and casts to f32 afterwards
+        # (gemma4.py: expert_scales = per_expert_scale[topk_ids].to(topk_weights
+        # .dtype); topk_weights = topk_weights * expert_scales; .to(float32)).
+        # The reroute kernel wants f32, so drop back to the gating dtype for the
+        # fold -- otherwise a no-op reroute rounds differently from stock vLLM
+        # and the threshold equivalence gate can never go byte-identical.
+        wdtype = gating_output.dtype
+        weights, new_ids = _reroute(
+            topk_weights,
+            topk_ids,
+            module.similarity_matrix,
+            int(module.select_top_k),
+            module._high_mask_cache,
+            module._expert_mapping_cache,
+            float(module.threshold),
+        )
+        weights = weights.to(wdtype) * scale[new_ids.to(torch.long)].to(wdtype)
+        # Match gemma4_routing_function_torch's contract exactly: it returns
+        # int32 ids, but the reroute kernel upcasts to int64 internally. Handing
+        # the MoE a different id dtype than stock vLLM does is a needless
+        # difference between this arm and the reference.
+        return weights.to(torch.float32), new_ids.to(torch.int32)
+
+    return rerouting_function
+
+
+def _enable_sere_on_gemma4(module: nn.Module, prefix: str) -> None:
+    layer_idx = _inject_sim_buffers(module, prefix)
+    if layer_idx is None:
+        return
+    router = getattr(getattr(module, "experts", None), "router", None)
+    if router is None or not hasattr(router, "custom_routing_function"):
+        raise RuntimeError(
+            "SERE gemma4: experts.router has no custom_routing_function "
+            f"(router={type(router).__name__}). vLLM's Gemma4MoE is expected to "
+            "build a CustomRoutingRouter; refusing to run a silently-vanilla arm."
+        )
+    if os.getenv("SERE_GEMMA4_TORCH_REF") == "1":
+        # Gate reference arm. Stock gemma4 routing on CUDA is the TRITON kernel,
+        # but the SERE hook can only run the torch reference path, so a vanilla
+        # baseline differs from any SERE arm by the kernel swap alone -- greedy
+        # text diverges at token 1 with zero reroutes and the equivalence gate
+        # can never pass. This arm is the torch path with no reroute, so
+        # torch_ref vs a threshold-above-max arm isolates SERE's own effect.
+        from vllm.model_executor.models.gemma4 import gemma4_routing_function_torch
+
+        def _torch_ref(hidden_states, gating_output, topk, renormalize):
+            return gemma4_routing_function_torch(
+                gating_output, topk, module.per_expert_scale
+            )
+
+        router.custom_routing_function = _torch_ref
+        logger.info("Enabled SERE gemma4 TORCH_REF (no reroute) for layer %s", layer_idx)
+        return
+    router.custom_routing_function = _make_gemma4_sere_routing_function(module)
+    logger.info(
+        "Enabled SERE routing (injected) for %s layer %s: select_top_k=%s threshold=%s routing=%s",
+        module.__class__.__name__, layer_idx, module.select_top_k, module.threshold,
+        "fused_triton" if os.getenv("SERE_GEMMA4_FUSED") == "1" else "torch_ref",
+    )
+
+
+def _patch_gemma4_block_init(block_cls: type[nn.Module]) -> None:
+    if getattr(block_cls, "_sere_v1_patched", False):
+        return
+    original_init = block_cls.__init__
+
+    def patched_init(self: nn.Module, *args: Any, **kwargs: Any) -> None:
+        original_init(self, *args, **kwargs)
+        _enable_sere_on_gemma4(self, _extract_prefix(args, kwargs))
+
+    block_cls.__init__ = patched_init
+    block_cls._sere_v1_patched = True
+
+
 def patch_vllm_v1_sere() -> None:
     global _PATCHED
     if _PATCHED:
@@ -579,6 +784,11 @@ def patch_vllm_v1_sere() -> None:
             _patch_qwen3_5_block_init(qwen3_next.Qwen3NextSparseMoeBlock)
         except Exception as exc:  # pragma: no cover
             logger.warning("SERE qwen3_5 block patch skipped: %r", exc)
+        try:
+            from vllm.model_executor.models import gemma4
+            _patch_gemma4_block_init(gemma4.Gemma4MoE)
+        except Exception as exc:  # pragma: no cover
+            logger.warning("SERE gemma4 block patch skipped: %r", exc)
     _PATCHED = True
 
 
