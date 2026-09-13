@@ -19,7 +19,7 @@ from utils import print_similarity_statistics
 def main():
     parser = argparse.ArgumentParser(description='Expert similarity calculation')
     parser.add_argument('--model_type', type=str, required=True, 
-                       choices=['qwen2_moe', 'qwen3_moe', 'deepseek_v2', 'qwen3_5_moe', 'glm4_moe_lite'],
+                       choices=['qwen2_moe', 'qwen3_moe', 'deepseek_v2', 'qwen3_5_moe', 'gemma4', 'glm4_moe_lite'],
                        help='Model type')
     parser.add_argument('--model_path', type=str, required=True, help='Original model path')
     parser.add_argument('--output_path', type=str, required=True, help='Output model path')
@@ -81,6 +81,9 @@ def main():
     elif args.model_type == "qwen3_5_moe":
         from adapted_modeling_qwen3_5_moe import Qwen3_5MoeForCausalLM
         model_class = Qwen3_5MoeForCausalLM
+    elif args.model_type == "gemma4":
+        from adapted_modeling_gemma4 import Gemma4ForCausalLM
+        model_class = Gemma4ForCausalLM
     elif args.model_type == "glm4_moe_lite":
         from adapted_modeling_glm4_moe_lite import Glm4MoeLiteForCausalLM
         model_class = Glm4MoeLiteForCausalLM
@@ -88,7 +91,7 @@ def main():
         raise ValueError(f"Unknown model_type: {args.model_type}!")
 
     # qwen3.5-moe is a ~64GB multimodal model -> shard across GPUs.
-    device_map = 'auto' if args.model_type in ("qwen3_5_moe", "glm4_moe_lite") else 'cuda'
+    device_map = 'auto' if args.model_type in ("qwen3_5_moe", "gemma4", "glm4_moe_lite") else 'cuda'
     model = model_class.from_pretrained(
         args.model_path,
         torch_dtype=torch.bfloat16,
@@ -98,22 +101,29 @@ def main():
     model.eval()
 
     # The text decoder layers: qwen3.5-moe nests them under language_model.
-    if args.model_type == "qwen3_5_moe":
+    if args.model_type in ("qwen3_5_moe", "gemma4"):
         decoder_layers = model.model.language_model.layers
     else:
         decoder_layers = model.model.layers
+
+    # Where the MoE lives on a decoder layer. Gemma4 has NO MoE block: the layer
+    # owns `router` and `experts` directly, and `layer.mlp` is the parallel DENSE
+    # MLP that runs alongside the MoE on every layer -- calibrating that would
+    # silently calibrate the wrong module.
+    moe_attr = 'experts' if args.model_type == "gemma4" else 'mlp'
 
     # Enable similarity computation for all MoE layers
     print("Configuring similarity computation...")
     moe_layers = []
     layer_indices = []
     for layer_idx, layer in enumerate(decoder_layers):
-        if hasattr(layer.mlp, 'enable_similarity_computation'):
-            layer.mlp.enable_similarity_computation(
+        moe = getattr(layer, moe_attr, None)
+        if moe is not None and hasattr(moe, 'enable_similarity_computation'):
+            moe.enable_similarity_computation(
                 method=args.similarity_method,
                 kernel=args.kernel
             )
-            moe_layers.append(layer.mlp)
+            moe_layers.append(moe)
             layer_indices.append(layer_idx)
 
     print(f"Found {len(moe_layers)} MoE layers: {layer_indices}")
@@ -170,7 +180,7 @@ def main():
     # Save model with similarity matrices. For qwen3_5_moe the SERE serve-side is a
     # plugin monkeypatch that loads similarity_matrices.pt into the BASE checkpoint,
     # so we skip the ~64GB full-model copy (disk) and only emit the matrices.
-    if args.model_type not in ("qwen3_5_moe", "glm4_moe_lite"):
+    if args.model_type not in ("qwen3_5_moe", "gemma4", "glm4_moe_lite"):
         model.save_pretrained(args.output_path)
     tokenizer.save_pretrained(args.output_path)
 
